@@ -173,7 +173,7 @@ echo -e "\033[32m ======>>>>>>delete cluster info \033[0m"
 kubectl delete clusterrolebinding kubelet-bootstrap
 kubectl delete clusterrolebinding kube-apiserver:kubelet-apis
 kubectl create clusterrolebinding kube-apiserver:kubelet-apis --clusterrole=system:kubelet-api-admin --user kubernetes
-kubectl create clusterrolebinding kubelet-bootstrap --clusterrole=system:node-bootstrapper --user=kubelet-bootstrap
+kubectl create clusterrolebinding kubelet-bootstrap --clusterrole=system:node-bootstrapper --group=system:nodes
 kubectl delete node --all
 kubectl delete csr --all
 
@@ -263,6 +263,8 @@ fi
 
 echo -e "\033[32m ======>>>>>>add nodes \033[0m"
 kubectl get csr
+sleep 10s
+kubectl get node
 sleep 10s
 kubectl label node node1 node2 node3 node-role.kubernetes.io/master=true
 echo "2nd"

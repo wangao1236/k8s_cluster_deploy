@@ -57,6 +57,7 @@ cat > kube-apiserver-csr.json <<EOF
     "hosts": [
       "127.0.0.1",
       "192.168.1.99",
+      "192.168.1.65",
       "192.168.1.67",
       "192.168.1.68",
       "192.168.1.69",
@@ -220,5 +221,43 @@ cat > kube-proxy-csr.json <<EOF
 EOF
 
 cfssl gencert -ca=../ca.pem -ca-key=../ca-key.pem -config=../ca-config.json -profile=kubernetes kube-proxy-csr.json | cfssljson -bare kube-proxy
+
+cd ..
+
+#----------------------- kubelet
+
+echo "generate kubelet cert"
+
+cd node
+
+for instance in node1 node2 node3; do
+cat > ${instance}-csr.json <<EOF
+{
+    "CN": "system:node:${instance}",
+    "key": {
+        "algo": "rsa",
+        "size": 2048
+    },
+    "hosts": [
+        "127.0.0.1",
+        "192.168.1.67",
+        "192.168.1.68",
+        "192.168.1.69",
+        "${instance}"
+    ],
+    "names": [
+        {
+            "C": "CN",
+            "ST": "BeiJing",
+            "L": "BeiJing",
+            "O": "system:nodes",
+            "OU": "System"
+        }
+    ]
+}
+EOF
+
+cfssl gencert -ca=../ca.pem -ca-key=../ca-key.pem -config=../ca-config.json -profile=kubernetes ${instance}-csr.json | cfssljson -bare ${instance}
+done
 
 cd ..
