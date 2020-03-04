@@ -119,6 +119,36 @@ kubectl config use-context default --kubeconfig=bootstrap.kubeconfig
 
 #----------------------
 
+echo "===> generate kubelet kubeconfig"
+
+# 创建 kubelet kubeconfig 
+
+# 设置集群参数
+for instance in node1 node2 node3; do
+kubectl config set-cluster kubernetes \
+  --certificate-authority=$SSL_DIR/ca.pem \
+  --embed-certs=true \
+  --server=${KUBE_APISERVER} \
+  --kubeconfig=${instance}.kubeconfig
+
+# 设置客户端认证参数
+kubectl config set-credentials system:node:${instance} \
+    --client-certificate=$SSL_DIR/node/${instance}.pem \
+    --client-key=$SSL_DIR/node/${instance}-key.pem \
+    --kubeconfig=${instance}.kubeconfig
+
+# 设置上下文参数
+kubectl config set-context default \
+  --cluster=kubernetes \
+  --user=system:node:${instance} \
+  --kubeconfig=${instance}.kubeconfig
+
+# 设置默认上下文
+kubectl config use-context default --kubeconfig=${instance}.kubeconfig
+done
+
+#----------------------
+
 echo "===> generate kube-proxy.kubeconfig"
 
 # 创建 kube-proxy.kubeconfig
