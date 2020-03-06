@@ -8,8 +8,9 @@ systemctl disable kube-apiserver
 
 cat <<EOF >/opt/kubernetes/cfg/kube-apiserver
 
-KUBE_APISERVER_OPTS="--logtostderr=true \\
+KUBE_APISERVER_OPTS="--logtostderr=false \\
 --v=4 \\
+--log-file=/opt/kubernetes/log/apiserver.log \\
 --anonymous-auth=false \\
 --etcd-servers=${ETCD_SERVERS} \\
 --etcd-cafile=/opt/etcd/ssl/ca.pem \\

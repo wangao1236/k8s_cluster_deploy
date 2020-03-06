@@ -5,8 +5,9 @@ systemctl disable kube-controller-manager.service
 
 cat <<EOF >/opt/kubernetes/cfg/kube-controller-manager
 
-KUBE_CONTROLLER_MANAGER_OPTS="--logtostderr=true \\
+KUBE_CONTROLLER_MANAGER_OPTS="--logtostderr=false \\
 --v=4 \\
+--log-file=/opt/kubernetes/log/controller-manager.log \\
 --bind-address=0.0.0.0 \\
 --cluster-name=kubernetes \\
 --kubeconfig=/opt/kubernetes/cfg/kube-controller-manager.kubeconfig \\

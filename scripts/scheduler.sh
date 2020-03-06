@@ -5,8 +5,9 @@ systemctl disable kube-scheduler
 
 cat <<EOF >/opt/kubernetes/cfg/kube-scheduler
 
-KUBE_SCHEDULER_OPTS="--logtostderr=true \\
+KUBE_SCHEDULER_OPTS="--logtostderr=false \\
 --v=4 \\
+--log-file=/opt/kubernetes/log/scheduler.log \\
 --bind-address=0.0.0.0 \\
 --port=10251 \\
 --secure-port=10259 \\

@@ -9,8 +9,9 @@ systemctl disable kubelet
 
 cat <<EOF >/opt/kubernetes/cfg/kubelet
 
-KUBELET_OPTS="--logtostderr=true \\
+KUBELET_OPTS="--logtostderr=false \\
 --v=4 \\
+--log-file=/opt/kubernetes/log/node.log \\
 --config=/opt/kubernetes/cfg/kubelet.config \\
 --node-ip=${NODE_ADDRESS} \\
 --bootstrap-kubeconfig=/opt/kubernetes/cfg/bootstrap.kubeconfig \\
