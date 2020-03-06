@@ -70,6 +70,9 @@ if [ $UPDATE -eq 1 ]; then
 fi
 
 if [ $TEST -eq 1 ]; then
+    ssh root@lb1 "systemctl stop nginx.service && \
+        systemctl disable nginx.service && \
+        rm /var/log/nginx/*"
     sudo scp -r /opt/kubernetes/ssl/* root@lb1:/etc/nginx/ssl/
     ssh root@lb1 "cd /etc/nginx/ssl && \
         cat admin.pem > test.pem && \
