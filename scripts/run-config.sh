@@ -62,6 +62,12 @@ if [ $UPDATE -eq 1 ]; then
     update_cert_kubeconfig
 fi
 
+#------------- clear logs
+echo -e "\033[32m ======>>>>>>clear logs \033[0m"
+sudo rm /opt/kubernetes/log/*
+ssh root@master2 "rm /opt/kubernetes/log/*"
+ssh root@master3 "rm /opt/kubernetes/log/*"
+
 #------------- restart components
 echo -e "\033[32m ======>>>>>>restart haproxy \033[0m"
 if [ $UPDATE -eq 1 ]; then
