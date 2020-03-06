@@ -293,4 +293,4 @@ sleep 10s
 echo "4th"
 kubectl get nodes
 sleep 10s
-kubectl get pods
+kubectl get pods --all-namespaces
