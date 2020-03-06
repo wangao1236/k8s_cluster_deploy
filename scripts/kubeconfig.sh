@@ -52,15 +52,15 @@ kubectl config set-cluster kubernetes \
   --server=${KUBE_APISERVER} \
   --kubeconfig=kube-controller-manager.kubeconfig
 
-kubectl config set-credentials system:kube-controller-manager \
-  --client-certificate=$SSL_DIR/master/kube-controller-manager.pem \
-  --client-key=$SSL_DIR/master/kube-controller-manager-key.pem \
+kubectl config set-credentials admin \
+  --client-certificate=$SSL_DIR/admin.pem \
+  --client-key=$SSL_DIR/admin-key.pem \
   --embed-certs=true \
   --kubeconfig=kube-controller-manager.kubeconfig
 
 kubectl config set-context system:kube-controller-manager@kubernetes \
   --cluster=kubernetes \
-  --user=system:kube-controller-manager \
+  --user=admin \
   --kubeconfig=kube-controller-manager.kubeconfig
 
 kubectl config use-context system:kube-controller-manager@kubernetes --kubeconfig=kube-controller-manager.kubeconfig
@@ -77,15 +77,15 @@ kubectl config set-cluster kubernetes \
   --server=${KUBE_APISERVER} \
   --kubeconfig=kube-scheduler.kubeconfig
 
-kubectl config set-credentials system:kube-scheduler \
-  --client-certificate=$SSL_DIR/master/kube-scheduler.pem \
-  --client-key=$SSL_DIR/master/kube-scheduler-key.pem \
+kubectl config set-credentials admin \
+  --client-certificate=$SSL_DIR/admin.pem \
+  --client-key=$SSL_DIR/admin-key.pem \
   --embed-certs=true \
   --kubeconfig=kube-scheduler.kubeconfig
 
 kubectl config set-context system:kube-scheduler@kubernetes \
   --cluster=kubernetes \
-  --user=system:kube-scheduler \
+  --user=admin \
   --kubeconfig=kube-scheduler.kubeconfig
 
 kubectl config use-context system:kube-scheduler@kubernetes --kubeconfig=kube-scheduler.kubeconfig
@@ -119,6 +119,36 @@ kubectl config use-context default --kubeconfig=bootstrap.kubeconfig
 
 #----------------------
 
+echo "===> generate kubelet kubeconfig"
+
+# 创建 kubelet kubeconfig 
+
+# 设置集群参数
+for instance in node1 node2 node3; do
+kubectl config set-cluster kubernetes \
+  --certificate-authority=$SSL_DIR/ca.pem \
+  --embed-certs=true \
+  --server=${KUBE_APISERVER} \
+  --kubeconfig=${instance}.kubeconfig
+
+# 设置客户端认证参数
+kubectl config set-credentials system:node:${instance} \
+    --client-certificate=$SSL_DIR/node/${instance}.pem \
+    --client-key=$SSL_DIR/node/${instance}-key.pem \
+    --kubeconfig=${instance}.kubeconfig
+
+# 设置上下文参数
+kubectl config set-context default \
+  --cluster=kubernetes \
+  --user=system:node:${instance} \
+  --kubeconfig=${instance}.kubeconfig
+
+# 设置默认上下文
+kubectl config use-context default --kubeconfig=${instance}.kubeconfig
+done
+
+#----------------------
+
 echo "===> generate kube-proxy.kubeconfig"
 
 # 创建 kube-proxy.kubeconfig
@@ -129,15 +159,15 @@ kubectl config set-cluster kubernetes \
   --server=${KUBE_APISERVER} \
   --kubeconfig=kube-proxy.kubeconfig
 
-kubectl config set-credentials system:kube-proxy \
-  --client-certificate=$SSL_DIR/node/kube-proxy.pem \
-  --client-key=$SSL_DIR/node/kube-proxy-key.pem \
+kubectl config set-credentials admin \
+  --client-certificate=$SSL_DIR/admin.pem \
+  --client-key=$SSL_DIR/admin-key.pem \
   --embed-certs=true \
   --kubeconfig=kube-proxy.kubeconfig
 
 kubectl config set-context system:kube-proxy@kubernetes \
   --cluster=kubernetes \
-  --user=system:kube-proxy \
+  --user=admin \
   --kubeconfig=kube-proxy.kubeconfig
 
 kubectl config use-context system:kube-proxy@kubernetes --kubeconfig=kube-proxy.kubeconfig

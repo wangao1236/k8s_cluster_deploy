@@ -28,6 +28,7 @@ function update_cert_kubeconfig() {
     echo -e "\033[32m ======>>>>>>delete old cert && kubeconfig \033[0m"
     rm -rf ../k8s-cert/*
     rm -rf ../kubeconfig/*
+    rm -rf ../audit/*
     sudo rm -rf /opt/kubernetes/ssl/*
     ssh root@master2 rm -rf /opt/kubernetes/ssl/*
     ssh root@master3 rm -rf /opt/kubernetes/ssl/*
@@ -55,12 +56,30 @@ function update_cert_kubeconfig() {
     cp config /home/ao/.kube/
     scp config ao@master2:/home/ao/.kube/
     scp config ao@master3:/home/ao/.kube/
+    cd ../audit
+cat > audit-policy.yaml <<EOF
+# Log all requests at the Metadata level.
+apiVersion: audit.k8s.io/v1
+kind: Policy
+rules:
+- level: Metadata
+EOF
+    echo -e "\033[32m ======>>>>>>copy new audit-policy \033[0m"
+    sudo cp audit-policy.yaml /opt/kubernetes/cfg
+    sudo scp /opt/kubernetes/cfg/audit-policy.yaml root@master2:/opt/kubernetes/cfg
+    sudo scp /opt/kubernetes/cfg/audit-policy.yaml root@master3:/opt/kubernetes/cfg
     cd ../scripts
 }
 
 if [ $UPDATE -eq 1 ]; then
     update_cert_kubeconfig
 fi
+
+#------------- clear logs
+echo -e "\033[32m ======>>>>>>clear logs \033[0m"
+sudo rm /opt/kubernetes/log/*
+ssh root@master2 "rm /opt/kubernetes/log/*"
+ssh root@master3 "rm /opt/kubernetes/log/*"
 
 #------------- restart components
 echo -e "\033[32m ======>>>>>>restart haproxy \033[0m"
@@ -70,11 +89,15 @@ if [ $UPDATE -eq 1 ]; then
 fi
 
 if [ $TEST -eq 1 ]; then
+    ssh root@lb1 "systemctl stop nginx.service && \
+        systemctl disable nginx.service && \
+        rm /var/log/nginx/*"
     sudo scp -r /opt/kubernetes/ssl/* root@lb1:/etc/nginx/ssl/
     ssh root@lb1 "cd /etc/nginx/ssl && \
         cat admin.pem > test.pem && \
         cat admin-key.pem > test-key.pem && \
         systemctl stop haproxy.service && \
+        systemctl enable nginx.service && \
         systemctl daemon-reload && \
         systemctl restart nginx.service && \
         systemctl status nginx.service"
@@ -162,9 +185,11 @@ kubectl cluster-info
 
 echo -e "\033[32m ======>>>>>>delete cluster info \033[0m"
 kubectl delete clusterrolebinding kubelet-bootstrap
-kubectl delete clusterrolebinding kube-apiserver:kubelet-apis
-kubectl create clusterrolebinding kube-apiserver:kubelet-apis --clusterrole=system:kubelet-api-admin --user kubernetes
-kubectl create clusterrolebinding kubelet-bootstrap --clusterrole=system:node-bootstrapper --user=kubelet-bootstrap
+kubectl delete clusterrolebinding kube-apiserver
+kubectl delete clusterrolebinding kube-controller-manager
+kubectl create clusterrolebinding kube-apiserver --clusterrole=system:kubelet-api-admin --user=admin
+kubectl create clusterrolebinding kube-controller-manager --clusterrole=system:kube-controller-manager --user=admin
+kubectl create clusterrolebinding kubelet-bootstrap --clusterrole=system:node-bootstrapper --group=system:nodes
 kubectl delete node --all
 kubectl delete csr --all
 
@@ -255,6 +280,8 @@ fi
 echo -e "\033[32m ======>>>>>>add nodes \033[0m"
 kubectl get csr
 sleep 10s
+kubectl get node
+sleep 10s
 kubectl label node node1 node2 node3 node-role.kubernetes.io/master=true
 echo "2nd"
 kubectl get nodes
@@ -282,6 +309,6 @@ cd ../yamls
 cd ../scripts
 sleep 10s
 echo "4th"
-kubectl get nodes
+kubectl get nodes --all-namespaces
 sleep 10s
-kubectl get pods
+kubectl get pods --all-namespaces
