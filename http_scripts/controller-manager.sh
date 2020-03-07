@@ -9,14 +9,14 @@ Description=Kubernetes Controller Manager
 Documentation=https://github.com/GoogleCloudPlatform/kubernetes
  
 [Service]
-EnvironmentFile=-/opt/kubernetes/cfg/config
+EnvironmentFile=-/opt/kubernetes/cfg/global
 EnvironmentFile=-/opt/kubernetes/cfg/controller-manager
-User=kube
-ExecStart=/opt/kubernetes/bin/kube-controller-manager \
-            $KUBE_LOGTOSTDERR \
-            $KUBE_LOG_LEVEL \
-            $KUBE_MASTER \
-            $KUBE_CONTROLLER_MANAGER_ARGS
+ExecStart=/opt/kubernetes/bin/kube-controller-manager \\
+\$KUBE_LOGTOSTDERR \\
+\$KUBE_LOG_LEVEL \\
+\$KUBE_MASTER \\
+\$KUBE_CONTROLLER_MANAGER_ARGS
+
 Restart=on-failure
 LimitNOFILE=65536
  
