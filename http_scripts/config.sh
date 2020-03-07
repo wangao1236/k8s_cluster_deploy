@@ -3,7 +3,7 @@
 ETCD_SERVERS=$1
 APISERVER=$2
 
-export KUBE_APISERVER="http://$APISERVER:8443"
+export KUBE_APISERVER="http://$APISERVER:8080"
 
 cat <<EOF >global
 ###
@@ -27,7 +27,7 @@ KUBE_LOG_LEVEL="--v=8"
 KUBE_ALLOW_PRIV="--allow-privileged=false"
  
 # How the controller-manager, scheduler, and proxy find the apiserver
-KUBE_MASTER="--master=http://$APISERVER:8443"
+KUBE_MASTER="--master=http://$APISERVER:8080"
 EOF
 
 cat <<EOF >controller-manager
@@ -37,7 +37,11 @@ cat <<EOF >controller-manager
 # defaults from config and apiserver should be adequate
  
 # Add your own!
-KUBE_CONTROLLER_MANAGER_ARGS="--log-file=/opt/kubernetes/log/controller-manager.log"
+KUBE_CONTROLLER_MANAGER_ARGS="--log-file=/opt/kubernetes/log/controller-manager.log \\
+--leader-elect=true \\
+--service-cluster-ip-range=10.254.0.0/16 \\
+--controllers=*,bootstrapsigner,tokencleaner \\
+--cluster-name=kubernetes"
 EOF
 
 cat <<EOF >/opt/kubernetes/cfg/scheduler
@@ -74,3 +78,16 @@ kubectl config set-context default \
 
 # 设置默认上下文
 kubectl config use-context default --kubeconfig=kubelet.kubeconfig
+
+kubectl config set-cluster kubernetes \
+  --embed-certs=false \
+  --server=${KUBE_APISERVER} \
+  --kubeconfig=kube-proxy.kubeconfig
+
+kubectl config set-context default \
+  --cluster=kubernetes \
+  --user="" \
+  --kubeconfig=kube-proxy.kubeconfig
+
+# 设置默认上下文
+kubectl config use-context default --kubeconfig=kube-proxy.kubeconfig
