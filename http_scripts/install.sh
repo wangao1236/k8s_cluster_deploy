@@ -12,6 +12,7 @@ ssh root@master3 "mkdir -p /opt/kubernetes/{bin,cfg,log} && \
 
 mkdir -p ../config
 sudo rm -rf ../config/*
+sudo rm /opt/kubernetes/cfg/*
 ssh root@master2 "rm -rf /opt/kubernetes/cfg/*"
 ssh root@master3 "rm -rf /opt/kubernetes/cfg/*"
 cp config.sh ../config
