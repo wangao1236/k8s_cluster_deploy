@@ -8,31 +8,20 @@ systemctl stop kube-apiserver
 systemctl disable kube-apiserver
 
 cat <<EOF >/opt/kubernetes/cfg/apiserver
-###
-# kubernetes system config
-#
-# The following values are used to configure the kube-apiserver
-#
-# The address on the local server to listen to.
+
 KUBE_API_ADDRESS="--insecure-bind-address=${MASTER_ADDRESS}"
 
-# The port on the local server to listen on.
-# KUBE_API_PORT="--port=8080"
+KUBE_API_PORT="--port=8080"
 
-# Port minions listen on
-# KUBELET_PORT="--kubelet-port=10250"
+KUBELET_PORT="--kubelet-port=10250"
 
-# Comma separated list of nodes in the etcd cluster
 KUBE_ETCD_SERVERS="--etcd-servers=${ETCD_SERVERS}"
 KUBE_ETCD_CAFILE="--etcd-cafile=/opt/etcd/ssl/ca.pem"
 KUBE_ETCD_CERTFILE="--etcd-certfile=/opt/etcd/ssl/server.pem"
 KUBE_ETCD_KEYFILE="--etcd-keyfile=/opt/etcd/ssl/server-key.pem"
 
-# Address range to use for services
 KUBE_SERVICE_ADDRESSES="--service-cluster-ip-range=10.254.0.0/16"
 
-# default admission control policies
-#KUBE_ADMISSION_CONTROL="--admission-control=NamespaceLifecycle,NamespaceExists,LimitRanger,SecurityContextDeny,ServiceAccount,ResourceQuota"
 KUBE_ADMISSION_CONTROL="--admission-control=NamespaceLifecycle,NamespaceExists,LimitRanger,SecurityContextDeny,ResourceQuota"
 
 # Add your own!

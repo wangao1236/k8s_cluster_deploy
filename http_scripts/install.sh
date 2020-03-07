@@ -124,5 +124,7 @@ kubectl taint nodes --all node-role.kubernetes.io/master-
 sleep 10s
 echo "3rd"
 kubectl get nodes --all-namespaces
+kubectl delete -f ../yamls//nginx-deployment.yaml
+sleep 5s
 kubectl apply -f ../yamls//nginx-deployment.yaml
 kubectl get pods --all-namespaces
