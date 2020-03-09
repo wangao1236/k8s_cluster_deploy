@@ -89,6 +89,32 @@ cfssl gencert -ca=../ca.pem -ca-key=../ca-key.pem -config=../ca-config.json -pro
 
 cd ..
 
+#----------------------- test-user
+
+echo "generate test-user cert"
+
+cat > test-user-csr.json <<EOF
+{
+  "CN": "test-user",
+  "hosts": [],
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "names": [
+    {
+      "C": "CN",
+      "L": "BeiJing",
+      "ST": "BeiJing",
+      "O": "system:test-user",
+      "OU": "System"
+    }
+  ]
+}
+EOF
+
+cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=kubernetes test-user-csr.json | cfssljson -bare test-user
+
 #----------------------- kubectl
 
 echo "generate kubectl cert"

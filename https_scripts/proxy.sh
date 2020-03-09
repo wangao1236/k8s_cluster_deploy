@@ -6,16 +6,27 @@ systemctl stop kube-proxy
 systemctl disable kube-proxy
 
 cat <<EOF >/opt/kubernetes/cfg/proxy
-KUBE_PROXY_OPTS="--bind-address=0.0.0.0 \\
---hostname-override=${NODE_NAME} \\
+KUBE_PROXY_ARGS="--log-file=/opt/kubernetes/log/proxy.log \\
+--bind-address=0.0.0.0 \\
+--config=/opt/kubernetes/cfg/kube-proxy.config \\
 --cleanup-ipvs=true \\
---cluster-cidr=10.254.0.0/16 \\
---proxy-mode=ipvs \\
---ipvs-min-sync-period=5s \\
---ipvs-sync-period=5s \\
---ipvs-scheduler=wrr \\
---masquerade-all=true \\
---kubeconfig=/opt/kubernetes/cfg/kube-proxy.kubeconfig"
+--proxy-mode=ipvs"
+EOF
+
+cat <<EOF >/opt/kubernetes/cfg/kube-proxy.config
+
+kind: KubeProxyConfiguration
+apiVersion: kubeproxy.config.k8s.io/v1alpha1
+bindAddress: 0.0.0.0
+hostnameOverride: ${NODE_NAME}
+clusterCIDR: "10.254.0.0/16"
+ipvs:
+  minSyncPeriod: 5s
+  scheduler: "wrr"
+  syncPeriod: 5s
+clientConnection:
+  kubeconfig: "/opt/kubernetes/cfg/kube-proxy.kubeconfig"
+
 EOF
 
 cat <<EOF >/usr/lib/systemd/system/kube-proxy.service
@@ -30,7 +41,6 @@ EnvironmentFile=-/opt/kubernetes/cfg/proxy
 ExecStart=/opt/kubernetes//bin/kube-proxy \\
 \$KUBE_LOGTOSTDERR \\
 \$KUBE_LOG_LEVEL \\
-\$KUBE_MASTER \\
 \$KUBE_PROXY_ARGS
 
 Restart=on-failure

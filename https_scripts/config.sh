@@ -2,10 +2,12 @@
 
 ETCD_SERVERS=$1
 APISERVER=$2
-SSL_DIR=$3
+BACKEND_APISERVER=$3
+SSL_DIR=$4
 
 export KUBE_APISERVER="http://$APISERVER:8080"
 export KUBE_TLS_APISERVER="https://$APISERVER:8443"
+export KUBE_BACKEND_TLS_APISERVER="https://$BACKEND_APISERVER:6443"
 
 cat <<EOF >global
 ###
@@ -42,6 +44,7 @@ cat <<EOF >controller-manager
 KUBE_CONTROLLER_MANAGER_ARGS="--log-file=/opt/kubernetes/log/controller-manager.log \\
 --leader-elect=true \\
 --bind-address=0.0.0.0 \\
+--cluster-cidr=10.254.0.0/16 \\
 --service-cluster-ip-range=10.254.0.0/16 \\
 --controllers=*,bootstrapsigner,tokencleaner \\
 --cluster-name=kubernetes \\
@@ -82,6 +85,43 @@ EOF
 
 #----------------------
 
+echo "===> generate test-user config"
+
+# 创建 test-user config 
+
+kubectl config set-cluster kubernetes \
+  --certificate-authority=$SSL_DIR/ca.pem \
+  --embed-certs=true \
+  --server=${KUBE_TLS_APISERVER} \
+  --kubeconfig=test-user.config
+
+kubectl config set-credentials test-user \
+  --client-certificate=$SSL_DIR/test-user.pem \
+  --client-key=$SSL_DIR/test-user-key.pem \
+  --embed-certs=true \
+  --kubeconfig=test-user.config
+
+kubectl config set-context test@kubernetes \
+  --cluster=kubernetes \
+  --user=test-user \
+  --kubeconfig=test-user.config
+
+
+kubectl config set-credentials admin \
+  --client-certificate=$SSL_DIR/admin.pem \
+  --client-key=$SSL_DIR/admin-key.pem \
+  --embed-certs=true \
+  --kubeconfig=test-user.config
+
+kubectl config set-context admin@kubernetes \
+  --cluster=kubernetes \
+  --user=admin \
+  --kubeconfig=test-user.config
+
+kubectl config use-context test@kubernetes --kubeconfig=test-user.config
+
+#----------------------
+
 echo "===> generate kubectl config"
 
 # 创建 kubectl config 
@@ -89,7 +129,18 @@ echo "===> generate kubectl config"
 kubectl config set-cluster kubernetes \
   --certificate-authority=$SSL_DIR/ca.pem \
   --embed-certs=true \
-  --server=${KUBE_TLS_APISERVER} \
+  --server=${KUBE_BACKEND_TLS_APISERVER} \
+  --kubeconfig=config
+
+kubectl config set-credentials test-user \
+  --client-certificate=$SSL_DIR/test-user.pem \
+  --client-key=$SSL_DIR/test-user-key.pem \
+  --embed-certs=true \
+  --kubeconfig=config
+
+kubectl config set-context test@kubernetes \
+  --cluster=kubernetes \
+  --user=test-user \
   --kubeconfig=config
 
 
@@ -118,15 +169,15 @@ kubectl config set-cluster kubernetes \
   --server=${KUBE_TLS_APISERVER} \
   --kubeconfig=kube-controller-manager.kubeconfig
 
-kubectl config set-credentials admin \
-  --client-certificate=$SSL_DIR/admin.pem \
-  --client-key=$SSL_DIR/admin-key.pem \
+kubectl config set-credentials test-user \
+  --client-certificate=$SSL_DIR/test-user.pem \
+  --client-key=$SSL_DIR/test-user-key.pem \
   --embed-certs=true \
   --kubeconfig=kube-controller-manager.kubeconfig
 
 kubectl config set-context system:kube-controller-manager@kubernetes \
   --cluster=kubernetes \
-  --user=admin \
+  --user=test-user \
   --kubeconfig=kube-controller-manager.kubeconfig
 
 kubectl config use-context system:kube-controller-manager@kubernetes --kubeconfig=kube-controller-manager.kubeconfig
@@ -143,15 +194,15 @@ kubectl config set-cluster kubernetes \
   --server=${KUBE_TLS_APISERVER} \
   --kubeconfig=kube-scheduler.kubeconfig
 
-kubectl config set-credentials admin \
-  --client-certificate=$SSL_DIR/admin.pem \
-  --client-key=$SSL_DIR/admin-key.pem \
+kubectl config set-credentials test-user \
+  --client-certificate=$SSL_DIR/test-user.pem \
+  --client-key=$SSL_DIR/test-user-key.pem \
   --embed-certs=true \
   --kubeconfig=kube-scheduler.kubeconfig
 
 kubectl config set-context system:kube-scheduler@kubernetes \
   --cluster=kubernetes \
-  --user=admin \
+  --user=test-user \
   --kubeconfig=kube-scheduler.kubeconfig
 
 kubectl config use-context system:kube-scheduler@kubernetes --kubeconfig=kube-scheduler.kubeconfig
@@ -198,15 +249,15 @@ kubectl config set-cluster kubernetes \
   --server=${KUBE_TLS_APISERVER} \
   --kubeconfig=kube-proxy.kubeconfig
 
-kubectl config set-credentials admin \
-  --client-certificate=$SSL_DIR/admin.pem \
-  --client-key=$SSL_DIR/admin-key.pem \
+kubectl config set-credentials test-user \
+  --client-certificate=$SSL_DIR/test-user.pem \
+  --client-key=$SSL_DIR/test-user-key.pem \
   --embed-certs=true \
   --kubeconfig=kube-proxy.kubeconfig
 
 kubectl config set-context system:kube-proxy@kubernetes \
   --cluster=kubernetes \
-  --user=admin \
+  --user=test-user \
   --kubeconfig=kube-proxy.kubeconfig
 
 kubectl config use-context system:kube-proxy@kubernetes --kubeconfig=kube-proxy.kubeconfig

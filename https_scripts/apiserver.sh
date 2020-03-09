@@ -11,7 +11,8 @@ cat <<EOF >/opt/kubernetes/cfg/apiserver
 
 KUBE_API_ADDRESS="--insecure-bind-address=${MASTER_ADDRESS}"
 
-KUBE_API_PORT="--secure-port=6443"
+KUBE_API_PORT="--secure-port=6443 \\
+--port=0"
 
 KUBELET_PORT="--kubelet-port=10250"
 
@@ -39,7 +40,9 @@ KUBE_API_ARGS="--log-file=/opt/kubernetes/log/apiserver.log \\
 --client-ca-file=/opt/kubernetes/ssl/ca.pem \\
 --service-account-key-file=/opt/kubernetes/ssl/ca-key.pem \\
 --service-node-port-range=30000-50000 \\
---enable-admission-plugins=NamespaceLifecycle,LimitRanger,ServiceAccount,ResourceQuota,NodeRestriction"
+--enable-admission-plugins=NamespaceLifecycle,LimitRanger,ServiceAccount,ResourceQuota,NodeRestriction \\
+--max-requests-inflight=200 \\
+--max-mutating-requests-inflight=400"
 EOF
 
 cat <<EOF >/usr/lib/systemd/system/kube-apiserver.service
