@@ -78,20 +78,22 @@ ssh root@master3 "systemctl daemon-reload && \
     systemctl restart etcd.service && \
     systemctl status etcd.service"
 sudo etcdctl --ca-file=/opt/etcd/ssl/ca.pem --cert-file=/opt/etcd/ssl/server.pem --key-file=/opt/etcd/ssl/server-key.pem --endpoints="https://192.168.1.67:2379,https://192.168.1.68,https://192.168.1.69" cluster-health
+sudo etcdctl --ca-file=/opt/etcd/ssl/ca.pem --cert-file=/opt/etcd/ssl/server.pem --key-file=/opt/etcd/ssl/server-key.pem --endpoints="https://192.168.1.67:2379,https://192.168.1.68,https://192.168.1.69" rmdir /coreos.com/network
 sudo etcdctl --ca-file=/opt/etcd/ssl/ca.pem --cert-file=/opt/etcd/ssl/server.pem --key-file=/opt/etcd/ssl/server-key.pem --endpoints="https://192.168.1.67:2379,https://192.168.1.68,https://192.168.1.69" set /coreos.com/network/config '{ "Network": "172.17.0.0/16", "Backend": {"Type": "vxlan"}}'
 echo -e "\033[32m ======>>>>>>restart flannel && docker \033[0m"
-sudo ./flannel.sh https://192.168.1.67:2379,https://192.168.1.68:2379,https://192.168.1.69:2379 
-scp flannel.sh ao@master2:/home/ao/Coding/k8s/scripts && scp flannel.sh ao@master3:/home/ao/Coding/k8s/scripts
+sudo ./flannel.sh https://192.168.1.67:2379,https://192.168.1.68:2379,https://192.168.1.69:2379
+scp flannel.sh ao@master2:/home/ao/Coding/k8s/https_scripts
+scp flannel.sh ao@master3:/home/ao/Coding/k8s/https_scripts
 sudo systemctl daemon-reload 
 sudo systemctl restart docker
 ssh root@master2 "hostname && \
-    cd /home/ao/Coding/k8s/scripts && \
+    cd /home/ao/Coding/k8s/https_scripts && \
     ./flannel.sh https://192.168.1.67:2379,https://192.168.1.68:2379,https://192.168.1.69:2379 && \
     systemctl daemon-reload && \
     systemctl restart docker && \
     systemctl status docker"
 ssh root@master3 "hostname && \
-    cd /home/ao/Coding/k8s/scripts && \
+    cd /home/ao/Coding/k8s/https_scripts && \
     ./flannel.sh https://192.168.1.67:2379,https://192.168.1.68:2379,https://192.168.1.69:2379 && \
     systemctl daemon-reload && \
     systemctl restart docker && \

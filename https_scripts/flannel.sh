@@ -1,6 +1,7 @@
 #!/bin/bash
 
 ETCD_ENDPOINTS=${1:-"http://127.0.0.1:2379"}
+IFACE=${2:-"enp0s8"}
 
 systemctl stop flanneld
 systemctl disable flanneld
@@ -10,7 +11,8 @@ cat <<EOF >/opt/kubernetes/cfg/flanneld
 FLANNEL_OPTIONS="--etcd-endpoints=${ETCD_ENDPOINTS} \\
 -etcd-cafile=/opt/etcd/ssl/ca.pem \\
 -etcd-certfile=/opt/etcd/ssl/server.pem \\
--etcd-keyfile=/opt/etcd/ssl/server-key.pem"
+-etcd-keyfile=/opt/etcd/ssl/server-key.pem \\
+--iface=${IFACE}"
 
 EOF
 
